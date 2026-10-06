@@ -313,9 +313,13 @@
       <span class="field-label">Store name</span>
       <input type="text" id="storeNameInput" value="Golnar">
     </div>
-    <div style="flex:1;min-width:160px;">
-      <span class="field-label">Logo initial</span>
+    <div style="flex:1;min-width:120px;">
+      <span class="field-label">Logo initial (used if no image)</span>
       <input type="text" id="logoInput" value="G" maxlength="2">
+    </div>
+    <div style="flex:1.4;min-width:200px;">
+      <span class="field-label">Logo image URL (optional)</span>
+      <input type="url" id="logoImgInput" placeholder="https://...">
     </div>
     <button class="save-pill" onclick="saveBrand()">Save</button>
   </div>
@@ -330,6 +334,18 @@
       <input type="text" id="newCategoryInput" placeholder="e.g. Bakhoor">
     </div>
     <button class="save-pill" onclick="addCategory()">Add</button>
+  </div>
+
+  <div class="admin-brand-edit" id="adminAccountEdit" style="display:none;">
+    <div style="flex:1;min-width:200px;">
+      <span class="field-label">Admin email (sign-in email)</span>
+      <input type="text" id="adminNewEmailInput" placeholder="new-admin@golnar.com">
+    </div>
+    <div style="flex:1;min-width:160px;">
+      <span class="field-label">New password (leave blank to keep current)</span>
+      <input type="password" id="adminNewPasswordInput" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <button class="save-pill" onclick="updateAdminAccount()">Update admin account</button>
   </div>
 
   <div id="addProductBar" style="display:none;margin-top:16px;">
@@ -378,6 +394,20 @@
   <div class="modal">
     <h3>Confirm your order</h3>
     <p>Cash on Delivery — pay the rider when your order arrives.</p>
+
+    <div class="a-field" style="margin-bottom:10px;">
+      <span class="field-label">Full name *</span>
+      <input type="text" id="custNameInput" placeholder="Your full name">
+    </div>
+    <div class="a-field" style="margin-bottom:10px;">
+      <span class="field-label">Phone number *</span>
+      <input type="text" id="custPhoneInput" placeholder="03XX-XXXXXXX">
+    </div>
+    <div class="a-field" style="margin-bottom:14px;">
+      <span class="field-label">Delivery address *</span>
+      <input type="text" id="custAddressInput" placeholder="House no, street, area, city">
+    </div>
+    <div class="error-note" id="checkoutError">Please fill in your name, phone number and address.</div>
 
     <div class="wallet-details">
       <div class="wallet-row"><span>Items Total</span><strong id="orderItemsTotal">Rs 0</strong></div>
@@ -700,6 +730,7 @@ function enterCustomerMode(){
   document.getElementById('btnAdmin').classList.remove('active');
   document.getElementById('brandEdit').style.display='none';
   document.getElementById('categoryEdit').style.display='none';
+  document.getElementById('adminAccountEdit').style.display='none';
   document.getElementById('addProductBar').style.display='none';
   document.getElementById('adminSaveNote').style.display='none';
   render();
@@ -711,6 +742,7 @@ function enterAdminMode(){
   document.getElementById('btnCustomer').classList.remove('active');
   document.getElementById('brandEdit').style.display='flex';
   document.getElementById('categoryEdit').style.display='flex';
+  document.getElementById('adminAccountEdit').style.display='flex';
   document.getElementById('addProductBar').style.display='block';
   document.getElementById('adminSaveNote').style.display='block';
   document.getElementById('adminChip').style.display='flex';
@@ -791,9 +823,35 @@ document.querySelectorAll('[data-gender]').forEach(b=>{
 function saveBrand(){
   const name = document.getElementById('storeNameInput').value || "Golnar";
   const logo = (document.getElementById('logoInput').value || "G").toUpperCase();
+  const logoImg = document.getElementById('logoImgInput').value.trim();
   document.getElementById('storeName').textContent = name;
-  document.querySelector('.brand-mark span').textContent = logo;
-  showToast('Store name updated');
+
+  const mark = document.querySelector('.brand-mark');
+  if(logoImg){
+    mark.innerHTML = `<img src="${logoImg}" alt="${name} logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+  } else {
+    mark.innerHTML = `<span>${logo}</span>`;
+  }
+  showToast('Store branding updated');
+}
+
+// admin account settings — update Supabase email / password for the signed-in admin
+async function updateAdminAccount(){
+  const newEmail = document.getElementById('adminNewEmailInput').value.trim();
+  const newPassword = document.getElementById('adminNewPasswordInput').value;
+  if(!newEmail && !newPassword){ showToast('Enter a new email or password to update'); return; }
+
+  const updates = {};
+  if(newEmail) updates.email = newEmail;
+  if(newPassword) updates.password = newPassword;
+
+  const { error } = await sb.auth.updateUser(updates);
+  if(error){
+    showToast('Could not update: ' + error.message);
+    return;
+  }
+  document.getElementById('adminNewPasswordInput').value = '';
+  showToast(newEmail ? 'Admin account updated — check your new email to confirm, if required' : 'Admin password updated');
 }
 
 // cart drawer
@@ -837,11 +895,25 @@ document.getElementById('copyContactNumber').onclick = ()=>{
 document.getElementById('checkoutBtn').onclick = ()=>{
   if(Object.keys(cart).length===0){ showToast('Cart is empty'); return; }
   document.getElementById('successNote').style.display='none';
+  document.getElementById('checkoutError').style.display='none';
+  document.getElementById('custNameInput').value = '';
+  document.getElementById('custPhoneInput').value = '';
+  document.getElementById('custAddressInput').value = '';
   updateOrderSummary();
   payModal.classList.add('open');
 };
 document.getElementById('cancelPay').onclick = ()=> payModal.classList.remove('open');
 document.getElementById('confirmPay').onclick = ()=>{
+  const name = document.getElementById('custNameInput').value.trim();
+  const phone = document.getElementById('custPhoneInput').value.trim();
+  const address = document.getElementById('custAddressInput').value.trim();
+
+  if(!name || !phone || !address){
+    document.getElementById('checkoutError').style.display='block';
+    return;
+  }
+  document.getElementById('checkoutError').style.display='none';
+
   document.getElementById('successNote').style.display='block';
   Object.keys(cart).forEach(id=>{
     const p = products.find(p=>p.id==id);
