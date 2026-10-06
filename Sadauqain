@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golnar — Persian Attar House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0d2b2c;
+    --surface:#133938;
+    --surface-2:#1a4544;
+    --gold:#cda052;
+    --gold-soft:#4a3b1f;
+    --ruby:#9c2b3b;
+    --text:#f4ecd8;
+    --text-2:#a9c3bf;
+    --text-3:#6f8c88;
+    --border:#275452;
+    --danger:#d36a56;
+    --ok:#8cae7c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, rgba(205,160,82,0.06), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(156,43,59,0.08), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Vazirmatn',sans-serif;
+    min-height:100vh;
+  }
+  .display{font-family:'Aref Ruqaa',serif;}
+
+  /* ornamental divider */
+  .ornament{
+    display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 6px;
+    color:var(--gold);opacity:0.75;
+  }
+  .ornament .line{height:1px;width:46px;background:linear-gradient(to right, transparent, var(--gold));}
+  .ornament .line.r{background:linear-gradient(to left, transparent, var(--gold));}
+  .ornament svg{width:16px;height:16px;flex-shrink:0;}
+
+  /* top bar */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 40px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:rgba(13,43,44,0.92);backdrop-filter:blur(6px);z-index:20;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:42px;height:42px;border-radius:50% 50% 50% 4px / 50% 50% 55% 4px;
+    border:1.5px solid var(--gold);transform:rotate(45deg);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand-mark span{transform:rotate(-45deg);font-family:'Aref Ruqaa',serif;font-size:16px;color:var(--gold);}
+  .brand-name{font-family:'Aref Ruqaa',serif;font-size:27px;letter-spacing:0.5px;color:var(--text);}
+  .top-actions{display:flex;align-items:center;gap:18px;}
+  .mode-toggle{
+    display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;font-size:13px;
+  }
+  .mode-toggle button{
+    background:transparent;border:none;color:var(--text-2);padding:7px 16px;cursor:pointer;font-family:'Vazirmatn',sans-serif;
+  }
+  .mode-toggle button.active{background:var(--gold);color:#1a1510;font-weight:600;}
+  .admin-chip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-3);}
+  .admin-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);}
+  .logout-link{
+    background:none;border:none;color:var(--text-3);font-size:12px;cursor:pointer;
+    text-decoration:underline;font-family:'Vazirmatn',sans-serif;
+  }
+  .logout-link:hover{color:var(--gold);}
+  .staff-link{
+    background:none;border:none;color:var(--text-3);opacity:0.5;font-size:11px;
+    cursor:pointer;font-family:'Vazirmatn',sans-serif;padding:4px;
+  }
+  .staff-link:hover{opacity:1;color:var(--gold);}
+  .cart-btn{
+    position:relative;background:transparent;border:1px solid var(--border);color:var(--text);
+    padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;font-family:'Vazirmatn',sans-serif;
+  }
+  .cart-btn:hover{border-color:var(--gold);}
+  .cart-count{
+    position:absolute;top:-7px;right:-7px;background:var(--gold);color:#1a1510;
+    font-size:11px;font-weight:700;width:18px;height:18px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* hero */
+  .hero{padding:68px 40px 36px;max-width:860px;text-align:center;margin:0 auto;}
+  .hero .tagline{color:var(--gold);font-size:12px;letter-spacing:3px;margin-bottom:14px;}
+  .hero h1{font-family:'Aref Ruqaa',serif;font-weight:700;font-size:54px;line-height:1.2;margin-bottom:16px;color:var(--text);}
+  .hero p{color:var(--text-2);font-size:15px;max-width:480px;line-height:1.7;margin:0 auto;}
+
+  .admin-brand-edit{
+    margin:22px auto 0;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;max-width:640px;text-align:left;
+  }
+  .admin-brand-edit input{flex:1;min-width:160px;}
+  .field-label{font-size:11px;color:var(--text-3);display:block;margin-bottom:5px;letter-spacing:0.3px;}
+  input[type=text], input[type=number], input[type=url], input[type=password], select{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:8px 10px;border-radius:6px;font-size:13px;font-family:'Vazirmatn',sans-serif;width:100%;
+  }
+  input:focus, select:focus{outline:none;border-color:var(--gold);}
+  .save-pill{
+    background:var(--gold);color:#1a1510;border:none;padding:8px 18px;border-radius:6px;
+    font-size:13px;font-weight:600;cursor:pointer;font-family:'Vazirmatn',sans-serif;white-space:nowrap;
+  }
+  .save-pill:hover{opacity:0.9;}
+  .add-product-btn{
+    background:var(--ruby);color:#fbeee7;border:none;padding:11px 22px;border-radius:8px;
+    font-size:14px;font-weight:600;cursor:pointer;font-family:'Vazirmatn',sans-serif;
+  }
+  .add-product-btn:hover{opacity:0.9;}
+
+  /* filters */
+  .filters{
+    display:flex;gap:28px;padding:0 40px 28px;border-bottom:1px solid var(--border);
+    flex-wrap:wrap;justify-content:center;
+  }
+  .filter-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .filter-group span.lbl{font-size:11px;color:var(--text-3);letter-spacing:0.5px;margin-right:4px;}
+  .pill{
+    background:transparent;border:1px solid var(--border);color:var(--text-2);
+    padding:6px 14px;border-radius:16px;font-size:13px;cursor:pointer;font-family:'Vazirmatn',sans-serif;
+  }
+  .pill.active{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+  .cat-chip{
+    display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text-2);padding:5px 6px 5px 12px;border-radius:14px;font-size:12px;
+  }
+  .cat-chip button{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;}
+  .cat-chip button:hover{color:var(--danger);}
+
+  /* grid */
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:26px;padding:40px 40px 80px;
+  }
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:4px 4px 50% 50% / 4px 4px 14% 14%;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+  /* signature hover highlight: gold arch glow + lift */
+  .card.customer-card:hover{
+    transform:translateY(-5px);
+    border-color:var(--gold);
+    box-shadow:0 12px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(205,160,82,0.35);
+  }
+  .photo{
+    aspect-ratio:1/1.1;background:
+      radial-gradient(circle at 50% 30%, rgba(205,160,82,0.14), transparent 60%),
+      var(--surface-2);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-3);font-size:12px;position:relative;overflow:hidden;
+  }
+  .photo img{width:100%;height:100%;object-fit:cover;}
+  .cat-tag{
+    position:absolute;top:10px;left:10px;font-size:10px;letter-spacing:0.5px;color:var(--gold);
+    background:rgba(13,43,44,0.75);padding:3px 8px;border-radius:10px;border:1px solid rgba(205,160,82,0.3);
+  }
+  .card-body{padding:18px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .p-name{font-family:'Aref Ruqaa',serif;font-size:21px;}
+  .p-meta{font-size:12px;color:var(--text-3);}
+  .p-price{font-size:16px;color:var(--gold);margin-top:2px;}
+  .p-stock{font-size:11px;color:var(--text-3);}
+  .p-stock.low{color:var(--danger);}
+  .add-btn{
+    margin-top:auto;background:transparent;border:1px solid var(--gold);color:var(--gold);
+    padding:9px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Vazirmatn',sans-serif;
+    transition:background 0.15s, color 0.15s;
+  }
+  .add-btn:hover{background:var(--gold);color:#1a1510;}
+  .add-btn:disabled{opacity:0.35;cursor:not-allowed;border-color:var(--border);color:var(--text-3);}
+
+  /* admin card fields */
+  .a-field{display:flex;flex-direction:column;gap:3px;}
+  .a-row{display:flex;gap:8px;}
+  .a-row .a-field{flex:1;}
+  .del-btn{
+    background:transparent;border:1px solid var(--border);color:var(--danger);
+    padding:8px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Vazirmatn',sans-serif;margin-top:4px;
+  }
+  .del-btn:hover{border-color:var(--danger);}
+  .add-product-card{
+    border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-3);cursor:pointer;min-height:220px;font-size:14px;background:transparent;font-family:'Vazirmatn',sans-serif;
+  }
+  .add-product-card:hover{border-color:var(--gold);color:var(--gold);}
+  .unsaved-flag{
+    font-size:10.5px;color:var(--danger);background:rgba(211,106,86,0.12);
+    border:1px solid rgba(211,106,86,0.4);border-radius:5px;padding:3px 8px;
+    display:inline-block;width:fit-content;letter-spacing:0.3px;
+  }
+
+  /* cart drawer */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40;display:none;}
+  .overlay.open{display:block;}
+  .drawer{
+    position:fixed;top:0;right:-380px;width:360px;height:100%;background:var(--surface);
+    border-left:1px solid var(--border);z-index:50;transition:right 0.25s ease;
+    display:flex;flex-direction:column;
+  }
+  .drawer.open{right:0;}
+  .drawer-head{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .drawer-head h2{font-family:'Aref Ruqaa',serif;font-size:23px;}
+  .close-x{background:none;border:none;color:var(--text-2);font-size:18px;cursor:pointer;}
+  .drawer-items{flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:14px;}
+  .drawer-item{display:flex;gap:10px;align-items:center;font-size:13px;}
+  .drawer-item .di-name{flex:1;}
+  .drawer-item .di-qty{color:var(--text-3);font-size:12px;}
+  .drawer-item button{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;}
+  .drawer-foot{padding:20px;border-top:1px solid var(--border);}
+  .total-row{display:flex;justify-content:space-between;font-size:15px;margin-bottom:14px;}
+  .total-row .amt{color:var(--gold);font-family:'Aref Ruqaa',serif;font-size:20px;}
+  .pay-btn{
+    width:100%;background:var(--gold);color:#1a1510;border:none;padding:12px;border-radius:6px;
+    font-size:14px;font-weight:700;cursor:pointer;font-family:'Vazirmatn',sans-serif;
+  }
+  .empty-note{color:var(--text-3);font-size:13px;padding:20px 0;text-align:center;}
+
+  /* payment modal */
+  .modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:60;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-wrap.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;width:340px;max-height:90vh;overflow-y:auto;}
+  .modal h3{font-family:'Aref Ruqaa',serif;font-size:22px;margin-bottom:6px;}
+  .modal p{color:var(--text-2);font-size:13px;margin-bottom:18px;}
+  .pay-option{
+    display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:8px;
+    padding:12px;margin-bottom:10px;cursor:pointer;font-size:13px;
+  }
+  .pay-option:hover{border-color:var(--gold);}
+  .pay-option input{accent-color:var(--gold);}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .modal-actions button{flex:1;padding:10px;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Vazirmatn',sans-serif;}
+  .cancel-btn{background:transparent;border:1px solid var(--border);color:var(--text-2);}
+  .confirm-btn{background:var(--gold);border:none;color:#1a1510;font-weight:700;}
+  .success-note{color:var(--ok);font-size:13px;text-align:center;padding:10px 0;display:none;}
+  .error-note{color:var(--danger);font-size:12px;margin-top:-8px;margin-bottom:12px;display:none;}
+
+  .wallet-details{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .wallet-card-title{font-family:'Aref Ruqaa',serif;font-size:17px;color:var(--gold);margin-bottom:10px;}
+  .wallet-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+  .wallet-row:last-of-type{border-bottom:none;}
+  .wallet-row span{color:var(--text-3);}
+  .wallet-row strong{color:var(--text);font-weight:600;flex:1;text-align:right;}
+  .copy-btn{
+    background:transparent;border:1px solid var(--gold);color:var(--gold);padding:3px 10px;border-radius:12px;
+    font-size:11px;cursor:pointer;font-family:'Vazirmatn',sans-serif;white-space:nowrap;
+  }
+  .copy-btn:hover{background:var(--gold);color:#1a1510;}
+  .copy-btn.copied{background:var(--ok);border-color:var(--ok);color:#1a1510;}
+  .wallet-note{font-size:11.5px;color:var(--text-3);margin-top:10px;line-height:1.5;font-style:italic;}
+  .wallet-hint{font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.4;}
+  .wallet-steps{margin:10px 0 0 18px;padding:0;}
+  .wallet-steps li{font-size:12px;color:var(--text-2);line-height:1.7;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--surface-2);border:1px solid var(--gold);color:var(--text);
+    padding:10px 20px;border-radius:20px;font-size:13px;z-index:70;opacity:0;pointer-events:none;
+    transition:opacity 0.2s;
+  }
+  .toast.show{opacity:1;}
+
+  @media(max-width:640px){
+    .topbar{padding:16px 20px;flex-wrap:wrap;gap:10px;}
+    .hero{padding:44px 20px 30px;}
+    .hero h1{font-size:38px;}
+    .filters{padding:0 20px 22px;}
+    .grid{padding:28px 20px 60px;}
+    .drawer{width:100%;right:-100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"><span>G</span></div>
+    <div class="brand-name" id="storeName">Golnar</div>
+  </div>
+  <div class="top-actions">
+    <div class="admin-chip" id="adminChip" style="display:none;">
+      <span class="dot"></span> Admin
+      <button class="logout-link" id="logoutBtn">Log out</button>
+    </div>
+    <div class="mode-toggle" id="modeToggle" style="display:none;">
+      <button id="btnCustomer" class="active">Customer</button>
+      <button id="btnAdmin">Admin</button>
+    </div>
+    <button class="cart-btn" id="cartBtn">Cart<span class="cart-count" id="cartCount" style="display:none;">0</span></button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="ornament">
+    <span class="line"></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z"/></svg>
+    <span class="line r"></span>
+  </div>
+  <div class="tagline">PERSIAN ATTAR HOUSE</div>
+  <h1 class="display" id="heroHeading">Rosewater, oud &amp; saffron, bottled with care</h1>
+  <p id="heroSub">Hand-blended attars and perfume oils, inspired by the gardens and bazaars of old Persia.</p>
+
+  <div class="admin-brand-edit" id="brandEdit" style="display:none;">
+    <div style="flex:1;min-width:160px;">
+      <span class="field-label">Store name</span>
+      <input type="text" id="storeNameInput" value="Golnar">
+    </div>
+    <div style="flex:1;min-width:160px;">
+      <span class="field-label">Logo initial</span>
+      <input type="text" id="logoInput" value="G" maxlength="2">
+    </div>
+    <button class="save-pill" onclick="saveBrand()">Save</button>
+  </div>
+
+  <div class="admin-brand-edit" id="categoryEdit" style="display:none;">
+    <div style="flex:1;min-width:220px;">
+      <span class="field-label">Categories — add as many as you need, no limit</span>
+      <div id="categoryChipList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div style="flex:1;min-width:160px;">
+      <span class="field-label">Add category</span>
+      <input type="text" id="newCategoryInput" placeholder="e.g. Bakhoor">
+    </div>
+    <button class="save-pill" onclick="addCategory()">Add</button>
+  </div>
+
+  <div id="addProductBar" style="display:none;margin-top:16px;">
+    <button class="add-product-btn" onclick="addProduct()">+ Add New Product</button>
+  </div>
+
+  <p id="adminSaveNote" style="display:none;color:var(--text-3);font-size:11.5px;max-width:600px;margin:14px auto 0;line-height:1.5;text-align:left;">
+    Each product card has its own <strong style="color:var(--gold);">Save changes</strong> button — edits only apply once you click it, and take effect on the customer storefront immediately after saving.
+  </p>
+</div>
+
+<div class="filters">
+  <div class="filter-group" id="categoryFilterGroup">
+    <span class="lbl">CATEGORY</span>
+  </div>
+  <div class="filter-group">
+    <span class="lbl">FOR</span>
+    <button class="pill active" data-gender="All">All</button>
+    <button class="pill" data-gender="Men">Men</button>
+    <button class="pill" data-gender="Women">Women</button>
+    <button class="pill" data-gender="Unisex">Unisex</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div style="text-align:center;padding:0 40px 40px;">
+  <button class="staff-link" id="staffLoginLink">Staff</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>Your cart</h2>
+    <button class="close-x" id="closeDrawer">&#10005;</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="total-row"><span>Items Total</span><span class="amt" id="cartTotal">Rs 0</span></div>
+    <div style="font-size:11px;color:var(--text-3);margin:-10px 0 14px;">+ Rs 249 delivery charges at checkout</div>
+    <button class="pay-btn" id="checkoutBtn">Proceed to payment</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="payModal">
+  <div class="modal">
+    <h3>Confirm your order</h3>
+    <p>Cash on Delivery — pay the rider when your order arrives.</p>
+
+    <div class="wallet-details">
+      <div class="wallet-row"><span>Items Total</span><strong id="orderItemsTotal">Rs 0</strong></div>
+      <div class="wallet-row"><span>Delivery Charges</span><strong id="orderDeliveryCharge">Rs 249</strong></div>
+      <div class="wallet-row"><span>Payable on Delivery</span><strong id="orderGrandTotal" style="color:var(--gold);font-size:15px;">Rs 0</strong></div>
+    </div>
+
+    <div class="wallet-details" style="border-color:var(--gold);">
+      <div class="wallet-card-title" style="font-size:14px;">Prefer bank transfer / JazzCash / Easypaisa?</div>
+      <div class="wallet-note" style="font-style:normal;color:var(--text-2);">
+        Contact us at <strong id="contactNumberText" style="color:var(--gold);">0335-1395343</strong>
+        <button class="copy-btn" id="copyContactNumber" type="button" style="margin-left:6px;">Copy</button>
+        after confirming your order on the website, and share your payment screenshot with us there for confirmation.
+      </div>
+    </div>
+
+    <div class="success-note" id="successNote">Order placed. Thank you!</div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="cancelPay">Cancel</button>
+      <button class="confirm-btn" id="confirmPay">Confirm order (COD)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="adminLoginModal">
+  <div class="modal">
+    <h3>Admin sign in</h3>
+    <p>Sign in with your admin account to manage products.</p>
+    <div class="a-field" style="margin-bottom:10px;">
+      <span class="field-label">Email</span>
+      <input type="text" id="adminEmailInput" placeholder="admin@golnar.com" autocomplete="off">
+    </div>
+    <div class="a-field" style="margin-bottom:6px;">
+      <span class="field-label">Password</span>
+      <input type="password" id="adminPasswordInput" placeholder="••••••••" autocomplete="off">
+    </div>
+    <div class="error-note" id="adminError">Incorrect email or password. Try again.</div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="cancelAdminLogin">Cancel</button>
+      <button class="confirm-btn" id="confirmAdminLogin">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- data ---------- */
+let products = [
+  {id:1, name:"Golab-e-Shirazi", category:"Attar", gender:"Unisex", price:3499, qty:14, img:""},
+  {id:2, name:"Oud Isfahani", category:"Oud", gender:"Men", price:6999, qty:6, img:""},
+  {id:3, name:"Zafaran Nectar", category:"Attar", gender:"Women", price:4299, qty:9, img:""},
+  {id:4, name:"Yasmin-e-Shab", category:"Eau de Parfum", gender:"Women", price:5499, qty:8, img:""},
+  {id:5, name:"Anbar-e-Shah", category:"Musk & Amber", gender:"Men", price:4999, qty:3, img:""},
+  {id:6, name:"Baghe Golnar Gift Set", category:"Gift Sets", gender:"Unisex", price:8999, qty:0, img:""},
+];
+let nextId = 7;
+let categories = ["Attar", "Oud", "Eau de Parfum", "Rose & Floral", "Musk & Amber", "Gift Sets"];
+let cart = {};
+let mode = "customer";
+let activeCat = "All";
+let activeGender = "All";
+
+/* ---------- admin auth (Supabase) ---------- */
+// 1) Create a Supabase project at https://supabase.com and paste its URL + anon key below.
+// 2) In the Supabase dashboard: Authentication → Users → Add user, create an admin
+//    account with a real email format (Supabase requires this — a plain username like
+//    "admin" will NOT work) and a password. Use that email/password to sign in below.
+// 3) Note: the CDN script above creates a global `window.supabase`, so the client
+//    instance here is named `sb` to avoid an "Identifier already declared" collision.
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let isAdminAuthed = false;
+
+// Restore admin session on page reload, if one exists.
+sb.auth.getSession().then(({data})=>{
+  if(data.session){
+    isAdminAuthed = true;
+  }
+});
+
+const grid = document.getElementById('grid');
+const cartCount = document.getElementById('cartCount');
+
+function fmt(n){ return "Rs " + n.toLocaleString(); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- categories ---------- */
+function renderCategoryFilters(){
+  const group = document.getElementById('categoryFilterGroup');
+  group.innerHTML = '<span class="lbl">CATEGORY</span>';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'pill' + (activeCat==='All' ? ' active' : '');
+  allBtn.textContent = 'All';
+  allBtn.onclick = ()=>{ activeCat='All'; renderCategoryFilters(); render(); };
+  group.appendChild(allBtn);
+  categories.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (activeCat===cat ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = ()=>{ activeCat=cat; renderCategoryFilters(); render(); };
+    group.appendChild(btn);
+  });
+}
+
+function renderCategoryChips(){
+  const list = document.getElementById('categoryChipList');
+  list.innerHTML = '';
+  categories.forEach(cat=>{
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.innerHTML = `${cat} <button title="Remove category">&#10005;</button>`;
+    chip.querySelector('button').onclick = ()=> removeCategory(cat);
+    list.appendChild(chip);
+  });
+}
+
+function addCategory(){
+  const input = document.getElementById('newCategoryInput');
+  const val = input.value.trim();
+  if(!val){ return; }
+  if(categories.some(c=>c.toLowerCase()===val.toLowerCase())){
+    showToast('That category already exists');
+    return;
+  }
+  categories.push(val);
+  input.value = '';
+  renderCategoryChips();
+  renderCategoryFilters();
+  render();
+  showToast('Category added');
+}
+
+function removeCategory(cat){
+  if(categories.length <= 1){ showToast("You need at least one category"); return; }
+  const inUse = products.some(p=>p.category===cat);
+  if(inUse && !confirm(`"${cat}" is used by existing products. Remove it and reassign those products to "${categories.find(c=>c!==cat)}"?`)) return;
+  categories = categories.filter(c=>c!==cat);
+  const fallback = categories[0];
+  products.forEach(p=>{ if(p.category===cat) p.category = fallback; });
+  if(activeCat===cat) activeCat = 'All';
+  renderCategoryChips();
+  renderCategoryFilters();
+  render();
+}
+
+/* ---------- render ---------- */
+function render(){
+  grid.innerHTML = "";
+  const filtered = products.filter(p=>{
+    const catOk = activeCat==="All" || p.category===activeCat;
+    const genOk = activeGender==="All" || p.gender===activeGender || p.gender==="Unisex";
+    return catOk && genOk;
+  });
+
+  filtered.forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'card' + (mode==='customer' ? ' customer-card' : '');
+
+    const photoInner = p.img ? `<img src="${p.img}" alt="${p.name}">` : `Product photo`;
+
+    if(mode === "customer"){
+      const outOfStock = p.qty <= 0;
+      card.innerHTML = `
+        <div class="photo">${photoInner}<span class="cat-tag">${p.category} · ${p.gender}</span></div>
+        <div class="card-body">
+          <div class="p-name display">${p.name}</div>
+          <div class="p-price">${fmt(p.price)}</div>
+          <div class="p-stock ${p.qty<=3 && p.qty>0 ? 'low':''}">${outOfStock ? 'Out of stock' : (p.qty<=3 ? 'Only '+p.qty+' left' : 'In stock')}</div>
+          <button class="add-btn" ${outOfStock?'disabled':''} onclick="addToCart(${p.id})">${outOfStock?'Unavailable':'Add to cart'}</button>
+        </div>`;
+    } else {
+      const dp = getDisplayProduct(p);
+      const isDirty = !!productDrafts[p.id];
+      card.innerHTML = `
+        <div class="photo">${photoInner}<span class="cat-tag">${p.category} · ${p.gender}</span></div>
+        <div class="card-body">
+          ${isDirty ? '<div class="unsaved-flag">Unsaved changes</div>' : ''}
+          <div class="a-field">
+            <span class="field-label">Name</span>
+            <input type="text" value="${dp.name}" oninput="updateDraftField(${p.id},'name',this.value)">
+          </div>
+          <div class="a-row">
+            <div class="a-field">
+              <span class="field-label">Category</span>
+              <select onchange="updateDraftField(${p.id},'category',this.value)">
+                ${categories.map(c=>`<option value="${c}" ${c===dp.category?'selected':''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="a-field">
+              <span class="field-label">For</span>
+              <select onchange="updateDraftField(${p.id},'gender',this.value)">
+                <option value="Men" ${dp.gender==='Men'?'selected':''}>Men</option>
+                <option value="Women" ${dp.gender==='Women'?'selected':''}>Women</option>
+                <option value="Unisex" ${dp.gender==='Unisex'?'selected':''}>Unisex</option>
+              </select>
+            </div>
+          </div>
+          <div class="a-row">
+            <div class="a-field">
+              <span class="field-label">Price (Rs)</span>
+              <input type="number" value="${dp.price}" oninput="updateDraftField(${p.id},'price',this.value)">
+            </div>
+            <div class="a-field">
+              <span class="field-label">Quantity</span>
+              <input type="number" value="${dp.qty}" oninput="updateDraftField(${p.id},'qty',this.value)">
+            </div>
+          </div>
+          <div class="a-field">
+            <span class="field-label">Picture URL</span>
+            <input type="url" value="${dp.img}" placeholder="https://..." oninput="updateDraftField(${p.id},'img',this.value)">
+          </div>
+          <button class="save-pill" style="width:100%;margin-top:2px;" onclick="saveProduct(${p.id})">Save changes</button>
+          <button class="del-btn" onclick="deleteProduct(${p.id})">Remove product</button>
+        </div>`;
+    }
+    grid.appendChild(card);
+  });
+
+  if(mode === "admin" && isAdminAuthed){
+    const addCard = document.createElement('div');
+    addCard.className = 'add-product-card';
+    addCard.textContent = '+ Add new product';
+    addCard.onclick = addProduct;
+    grid.appendChild(addCard);
+  }
+}
+
+/* ---------- admin edit drafts (explicit Save, not auto-save) ---------- */
+let productDrafts = {};
+
+function getDisplayProduct(p){ return productDrafts[p.id] || p; }
+
+function updateDraftField(id, field, value){
+  if(!productDrafts[id]){
+    const p = products.find(pp=>pp.id===id);
+    productDrafts[id] = {...p};
+  }
+  if(field==='price' || field==='qty') productDrafts[id][field] = Math.max(0, Number(value)||0);
+  else productDrafts[id][field] = value;
+}
+
+function saveProduct(id){
+  const draft = productDrafts[id];
+  const p = products.find(pp=>pp.id===id);
+  if(draft && p){ Object.assign(p, draft); }
+  delete productDrafts[id];
+  showToast('Saved — now visible on the customer storefront');
+  render();
+}
+
+function deleteProduct(id){
+  products = products.filter(p=>p.id!==id);
+  delete cart[id];
+  delete productDrafts[id];
+  render();
+}
+
+function addProduct(){
+  activeCat = 'All';
+  activeGender = 'All';
+  products.push({id:nextId++, name:"New product", category:categories[0], gender:"Unisex", price:0, qty:0, img:""});
+  renderCategoryFilters();
+  render();
+  showToast('New product added below — fill in details and click Save');
+}
+
+function addToCart(id){
+  const p = products.find(p=>p.id===id);
+  if(!p || p.qty <= 0) return;
+  cart[id] = (cart[id]||0) + 1;
+  updateCartUI();
+  showToast(p.name + ' added to cart');
+}
+
+function updateCartUI(){
+  const ids = Object.keys(cart);
+  const count = ids.reduce((s,id)=>s+cart[id],0);
+  cartCount.style.display = count>0 ? 'flex' : 'none';
+  cartCount.textContent = count;
+
+  const itemsEl = document.getElementById('drawerItems');
+  itemsEl.innerHTML = "";
+  let total = 0;
+  if(ids.length===0){
+    itemsEl.innerHTML = '<div class="empty-note">Your cart is empty</div>';
+  }
+  ids.forEach(id=>{
+    const p = products.find(p=>p.id==id);
+    if(!p) return;
+    const lineTotal = p.price * cart[id];
+    total += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'drawer-item';
+    row.innerHTML = `
+      <div class="di-name display">${p.name}<br><span class="di-qty">${fmt(p.price)} × ${cart[id]}</span></div>
+      <div>${fmt(lineTotal)}</div>
+      <button onclick="removeFromCart(${id})">&#10005;</button>`;
+    itemsEl.appendChild(row);
+  });
+  document.getElementById('cartTotal').textContent = fmt(total);
+}
+
+function removeFromCart(id){
+  delete cart[id];
+  updateCartUI();
+}
+
+/* ---------- mode toggle + admin gate ---------- */
+function enterCustomerMode(){
+  mode='customer';
+  document.getElementById('btnCustomer').classList.add('active');
+  document.getElementById('btnAdmin').classList.remove('active');
+  document.getElementById('brandEdit').style.display='none';
+  document.getElementById('categoryEdit').style.display='none';
+  document.getElementById('addProductBar').style.display='none';
+  document.getElementById('adminSaveNote').style.display='none';
+  render();
+}
+
+function enterAdminMode(){
+  mode='admin';
+  document.getElementById('btnAdmin').classList.add('active');
+  document.getElementById('btnCustomer').classList.remove('active');
+  document.getElementById('brandEdit').style.display='flex';
+  document.getElementById('categoryEdit').style.display='flex';
+  document.getElementById('addProductBar').style.display='block';
+  document.getElementById('adminSaveNote').style.display='block';
+  document.getElementById('adminChip').style.display='flex';
+  document.getElementById('modeToggle').style.display='flex';
+  renderCategoryChips();
+  render();
+}
+
+document.getElementById('btnCustomer').onclick = enterCustomerMode;
+document.getElementById('btnAdmin').onclick = enterAdminMode;
+
+document.getElementById('staffLoginLink').onclick = ()=>{
+  if(isAdminAuthed){
+    enterAdminMode();
+  } else {
+    document.getElementById('adminEmailInput').value = '';
+    document.getElementById('adminPasswordInput').value = '';
+    document.getElementById('adminError').style.display = 'none';
+    document.getElementById('adminLoginModal').classList.add('open');
+    setTimeout(()=>document.getElementById('adminEmailInput').focus(), 50);
+  }
+};
+
+document.getElementById('logoutBtn').onclick = async ()=>{
+  await sb.auth.signOut();
+  isAdminAuthed = false;
+  document.getElementById('adminChip').style.display='none';
+  document.getElementById('modeToggle').style.display='none';
+  enterCustomerMode();
+  showToast('Logged out of admin');
+};
+
+async function attemptAdminLogin(){
+  const email = document.getElementById('adminEmailInput').value.trim();
+  const password = document.getElementById('adminPasswordInput').value;
+  const confirmBtn = document.getElementById('confirmAdminLogin');
+  document.getElementById('adminError').style.display = 'none';
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Signing in...';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = 'Sign in';
+
+  if(error){
+    document.getElementById('adminError').textContent = error.message || 'Incorrect email or password. Try again.';
+    document.getElementById('adminError').style.display = 'block';
+    return;
+  }
+  isAdminAuthed = true;
+  document.getElementById('adminLoginModal').classList.remove('open');
+  enterAdminMode();
+  showToast('Admin access granted');
+}
+document.getElementById('confirmAdminLogin').onclick = attemptAdminLogin;
+document.getElementById('cancelAdminLogin').onclick = ()=>{
+  document.getElementById('adminLoginModal').classList.remove('open');
+};
+document.getElementById('adminPasswordInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') attemptAdminLogin();
+});
+document.getElementById('adminEmailInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') attemptAdminLogin();
+});
+
+// gender filter
+document.querySelectorAll('[data-gender]').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('[data-gender]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    activeGender = b.dataset.gender;
+    render();
+  };
+});
+
+// brand edit
+function saveBrand(){
+  const name = document.getElementById('storeNameInput').value || "Golnar";
+  const logo = (document.getElementById('logoInput').value || "G").toUpperCase();
+  document.getElementById('storeName').textContent = name;
+  document.querySelector('.brand-mark span').textContent = logo;
+  showToast('Store name updated');
+}
+
+// cart drawer
+const overlay = document.getElementById('overlay');
+const drawer = document.getElementById('drawer');
+function openDrawer(){ overlay.classList.add('open'); drawer.classList.add('open'); }
+function closeDrawerFn(){ overlay.classList.remove('open'); drawer.classList.remove('open'); }
+document.getElementById('cartBtn').onclick = openDrawer;
+document.getElementById('closeDrawer').onclick = closeDrawerFn;
+overlay.onclick = closeDrawerFn;
+
+// payment modal — Cash on Delivery with fixed delivery charge; bank/wallet
+// transfers are handled manually (customer contacts us + sends screenshot)
+const payModal = document.getElementById('payModal');
+const CONTACT_NUMBER = "0335-1395343"; // WhatsApp/call number for manual bank/JazzCash/Easypaisa transfers
+const DELIVERY_CHARGE = 249;
+
+function getCartItemsTotal(){
+  return Object.keys(cart).reduce((sum,id)=>{
+    const p = products.find(p=>p.id==id);
+    return p ? sum + p.price*cart[id] : sum;
+  }, 0);
+}
+
+function updateOrderSummary(){
+  const itemsTotal = getCartItemsTotal();
+  document.getElementById('orderItemsTotal').textContent = fmt(itemsTotal);
+  document.getElementById('orderDeliveryCharge').textContent = fmt(DELIVERY_CHARGE);
+  document.getElementById('orderGrandTotal').textContent = fmt(itemsTotal + DELIVERY_CHARGE);
+}
+
+document.getElementById('copyContactNumber').onclick = ()=>{
+  navigator.clipboard.writeText(CONTACT_NUMBER).then(()=>{
+    const btn = document.getElementById('copyContactNumber');
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 1500);
+  }).catch(()=> showToast('Could not copy — please copy manually'));
+};
+
+document.getElementById('checkoutBtn').onclick = ()=>{
+  if(Object.keys(cart).length===0){ showToast('Cart is empty'); return; }
+  document.getElementById('successNote').style.display='none';
+  updateOrderSummary();
+  payModal.classList.add('open');
+};
+document.getElementById('cancelPay').onclick = ()=> payModal.classList.remove('open');
+document.getElementById('confirmPay').onclick = ()=>{
+  document.getElementById('successNote').style.display='block';
+  Object.keys(cart).forEach(id=>{
+    const p = products.find(p=>p.id==id);
+    if(p) p.qty = Math.max(0, p.qty - cart[id]);
+  });
+  cart = {};
+  updateCartUI();
+  setTimeout(()=>{
+    payModal.classList.remove('open');
+    closeDrawerFn();
+    render();
+  }, 1200);
+};
+
+renderCategoryFilters();
+render();
+updateCartUI();
+</script>
+</body>
+</html>
