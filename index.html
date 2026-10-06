@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#0d2b2c;
@@ -338,14 +337,10 @@
 
   <div class="admin-brand-edit" id="adminAccountEdit" style="display:none;">
     <div style="flex:1;min-width:200px;">
-      <span class="field-label">Admin email (sign-in email)</span>
-      <input type="text" id="adminNewEmailInput" placeholder="new-admin@golnar.com">
-    </div>
-    <div style="flex:1;min-width:160px;">
-      <span class="field-label">New password (leave blank to keep current)</span>
+      <span class="field-label">New admin password</span>
       <input type="password" id="adminNewPasswordInput" placeholder="••••••••" autocomplete="new-password">
     </div>
-    <button class="save-pill" onclick="updateAdminAccount()">Update admin account</button>
+    <button class="save-pill" onclick="updateAdminAccount()">Update password</button>
   </div>
 
   <div id="addProductBar" style="display:none;margin-top:16px;">
@@ -435,16 +430,12 @@
 <div class="modal-wrap" id="adminLoginModal">
   <div class="modal">
     <h3>Admin sign in</h3>
-    <p>Sign in with your admin account to manage products.</p>
-    <div class="a-field" style="margin-bottom:10px;">
-      <span class="field-label">Email</span>
-      <input type="text" id="adminEmailInput" placeholder="admin@golnar.com" autocomplete="off">
-    </div>
+    <p>Enter the admin password to manage products.</p>
     <div class="a-field" style="margin-bottom:6px;">
       <span class="field-label">Password</span>
       <input type="password" id="adminPasswordInput" placeholder="••••••••" autocomplete="off">
     </div>
-    <div class="error-note" id="adminError">Incorrect email or password. Try again.</div>
+    <div class="error-note" id="adminError">Incorrect password. Try again.</div>
     <div class="modal-actions">
       <button class="cancel-btn" id="cancelAdminLogin">Cancel</button>
       <button class="confirm-btn" id="confirmAdminLogin">Sign in</button>
@@ -472,23 +463,12 @@ let activeCat = "All";
 let activeGender = "All";
 
 /* ---------- admin auth (Supabase) ---------- */
-// 1) Create a Supabase project at https://supabase.com and paste its URL + anon key below.
-// 2) In the Supabase dashboard: Authentication → Users → Add user, create an admin
-//    account with a real email format (Supabase requires this — a plain username like
-//    "admin" will NOT work) and a password. Use that email/password to sign in below.
-// 3) Note: the CDN script above creates a global `window.supabase`, so the client
-//    instance here is named `sb` to avoid an "Identifier already declared" collision.
-const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// TEMPORARY: simple client-side password gate so admin login works right away
+// without needing a Supabase project set up first. Change this password before
+// sharing the link. When you're ready to switch to real Supabase auth (recommended
+// before going live), just ask — it's the same flow we built for AR Store by AR.
+let ADMIN_PASSWORD = "Golnar2026";
 let isAdminAuthed = false;
-
-// Restore admin session on page reload, if one exists.
-sb.auth.getSession().then(({data})=>{
-  if(data.session){
-    isAdminAuthed = true;
-  }
-});
 
 const grid = document.getElementById('grid');
 const cartCount = document.getElementById('cartCount');
@@ -758,16 +738,14 @@ document.getElementById('staffLoginLink').onclick = ()=>{
   if(isAdminAuthed){
     enterAdminMode();
   } else {
-    document.getElementById('adminEmailInput').value = '';
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('adminError').style.display = 'none';
     document.getElementById('adminLoginModal').classList.add('open');
-    setTimeout(()=>document.getElementById('adminEmailInput').focus(), 50);
+    setTimeout(()=>document.getElementById('adminPasswordInput').focus(), 50);
   }
 };
 
-document.getElementById('logoutBtn').onclick = async ()=>{
-  await sb.auth.signOut();
+document.getElementById('logoutBtn').onclick = ()=>{
   isAdminAuthed = false;
   document.getElementById('adminChip').style.display='none';
   document.getElementById('modeToggle').style.display='none';
@@ -775,37 +753,22 @@ document.getElementById('logoutBtn').onclick = async ()=>{
   showToast('Logged out of admin');
 };
 
-async function attemptAdminLogin(){
-  const email = document.getElementById('adminEmailInput').value.trim();
-  const password = document.getElementById('adminPasswordInput').value;
-  const confirmBtn = document.getElementById('confirmAdminLogin');
-  document.getElementById('adminError').style.display = 'none';
-  confirmBtn.disabled = true;
-  confirmBtn.textContent = 'Signing in...';
-
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-
-  confirmBtn.disabled = false;
-  confirmBtn.textContent = 'Sign in';
-
-  if(error){
-    document.getElementById('adminError').textContent = error.message || 'Incorrect email or password. Try again.';
+function attemptAdminLogin(){
+  const val = document.getElementById('adminPasswordInput').value;
+  if(val === ADMIN_PASSWORD){
+    isAdminAuthed = true;
+    document.getElementById('adminLoginModal').classList.remove('open');
+    enterAdminMode();
+    showToast('Admin access granted');
+  } else {
     document.getElementById('adminError').style.display = 'block';
-    return;
   }
-  isAdminAuthed = true;
-  document.getElementById('adminLoginModal').classList.remove('open');
-  enterAdminMode();
-  showToast('Admin access granted');
 }
 document.getElementById('confirmAdminLogin').onclick = attemptAdminLogin;
 document.getElementById('cancelAdminLogin').onclick = ()=>{
   document.getElementById('adminLoginModal').classList.remove('open');
 };
 document.getElementById('adminPasswordInput').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') attemptAdminLogin();
-});
-document.getElementById('adminEmailInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter') attemptAdminLogin();
 });
 
@@ -835,23 +798,16 @@ function saveBrand(){
   showToast('Store branding updated');
 }
 
-// admin account settings — update Supabase email / password for the signed-in admin
-async function updateAdminAccount(){
-  const newEmail = document.getElementById('adminNewEmailInput').value.trim();
+// admin account settings — changes the in-page password for this browser session only.
+// Note: this resets if the page is reloaded/republished, since there's no backend yet.
+// Edit ADMIN_PASSWORD directly in the code for a change that actually persists,
+// or switch to Supabase auth for real, persistent admin accounts.
+function updateAdminAccount(){
   const newPassword = document.getElementById('adminNewPasswordInput').value;
-  if(!newEmail && !newPassword){ showToast('Enter a new email or password to update'); return; }
-
-  const updates = {};
-  if(newEmail) updates.email = newEmail;
-  if(newPassword) updates.password = newPassword;
-
-  const { error } = await sb.auth.updateUser(updates);
-  if(error){
-    showToast('Could not update: ' + error.message);
-    return;
-  }
+  if(!newPassword){ showToast('Enter a new password to update'); return; }
+  ADMIN_PASSWORD = newPassword;
   document.getElementById('adminNewPasswordInput').value = '';
-  showToast(newEmail ? 'Admin account updated — check your new email to confirm, if required' : 'Admin password updated');
+  showToast('Password updated for this session — edit ADMIN_PASSWORD in the code to make it permanent');
 }
 
 // cart drawer
